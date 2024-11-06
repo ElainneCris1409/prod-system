@@ -21,12 +21,28 @@ app.use(express.json()); //serve para o express entender que o corpo (body) da r
 
 app.use(express.urlencoded({extended: true}));// serve para o express entender que o corpo (body) da requisição é um formulário
 
-app.get('/clientes', async(req, res) => {
+app.get('/clientes', async(req, res) => { //cria a rota /clientes
     const conn = await pool.getConnection();
     const [rows] = await conn.query('SELECT * FROM clientes'); //faz a consulta no banco de dados
     conn.release();
     res.json(rows);
 });
+app.post('/clientes', async(req, res) => { //cria a rota /clientes com o método POST para inserir um novo cliente no banco de dados
+    const {nome, email, telefone, endereco} = req.body;
+    const conn = await pool.getConnection();
+    const [result] = await conn.query('INSERT INTO clientes (nome, email, telefone, endereco) VALUES (?, ?, ?, ?)', [nome, email, telefone, endereco]);
+    conn.release();
+    res.json(result);
+});
+app.put('/clientes/:id', async(req, res) => { //cria a rota /clientes com o método PUT para atualizar um cliente no banco de dados
+    const {nome, email, telefone, endereco, cliente_id} = req.body;
+    const {id} = req.params;
+    const conn = await pool.getConnection();
+    const [result] = await conn.query('UPDATE clientes SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE cliente_id = ?', [nome, email, telefone, endereco, cliente_id]);
+    conn.release();
+    res.json(result);
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
