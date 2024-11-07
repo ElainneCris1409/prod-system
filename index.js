@@ -21,7 +21,7 @@ app.use(express.json()); //serve para o express entender que o corpo (body) da r
 
 app.use(express.urlencoded({extended: true}));// serve para o express entender que o corpo (body) da requisição é um formulário
 
-app.get('/clientes', async(req, res) => { //cria a rota /clientes
+app.get('/clientes', async(req, res) => { //cria a rota /clientes (req: igual a request que chama o backend, res: igual a response que o backend retorna para o frontend) com o método GET para buscar todos os clientes no banco de dados  
     const conn = await pool.getConnection();
     const [rows] = await conn.query('SELECT * FROM clientes'); //faz a consulta no banco de dados
     conn.release();
@@ -30,19 +30,24 @@ app.get('/clientes', async(req, res) => { //cria a rota /clientes
 app.post('/clientes', async(req, res) => { //cria a rota /clientes com o método POST para inserir um novo cliente no banco de dados
     const {nome, email, telefone, endereco} = req.body;
     const conn = await pool.getConnection();
-    const [result] = await conn.query('INSERT INTO clientes (nome, email, telefone, endereco) VALUES (?, ?, ?, ?)', [nome, email, telefone, endereco]);
+    await conn.query('INSERT INTO clientes (nome, email, telefone, endereco) VALUES (?, ?, ?, ?)', [nome, email, telefone, endereco]);
     conn.release();
-    res.json(result);
+    res.json();
 });
-app.put('/clientes/:id', async(req, res) => { //cria a rota /clientes com o método PUT para atualizar um cliente no banco de dados
-    const {nome, email, telefone, endereco, cliente_id} = req.body;
+app.put('/clientes', async(req, res) => { //cria a rota /clientes com o método PUT para atualizar um cliente no banco de dados
+    const {nome, email, telefone, endereco,id } = req.body;
+    const conn = await pool.getConnection();
+    await conn.query('UPDATE clientes SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE cliente_id = ?', [nome, email, telefone, endereco,id]);
+    conn.release();
+    res.json();
+});
+app.get('/clientes/:id', async(req, res) => { //cria a rota /clientes/:id com o método GET para buscar um cliente específico no banco de dados  
     const {id} = req.params;
     const conn = await pool.getConnection();
-    const [result] = await conn.query('UPDATE clientes SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE cliente_id = ?', [nome, email, telefone, endereco, cliente_id]);
+    const [rows] = await conn.query('SELECT * FROM clientes WHERE cliente_id = ?', [id]);
     conn.release();
-    res.json(result);
+    res.json(rows);
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
