@@ -49,6 +49,29 @@ app.get('/clientes/:id', async(req, res) => { //cria a rota /clientes/:id com o 
     res.json(rows);
 });
 
+app.get('/produtos', async(req, res) => { //cria a rota /produtos com o método GET para buscar todos os produtos no banco de dados  
+    const conn = await pool.getConnection();
+    const [rows] = await conn.query('SELECT * FROM produtos'); //faz a consulta no banco de dados
+    conn.release();
+    res.json(rows);
+});
+
+app.post('/produtos', async(req, res) => { //cria a rota /produtos com o método POST para inserir um novo produto no banco de dados 
+    const {nome, descricao, preco, estoque} = req.body;
+    const conn = await pool.getConnection();
+    await conn.query('INSERT INTO produtos (nome, descricao, preco, estoque) VALUES (?, ?, ?, ?)', [nome, descricao, preco, estoque]);
+    conn.release();
+    res.json();
+});
+
+app.put('/produtos', async(req, res) => { //cria a rota /produtos com o método PUT para atualizar um produto no banco de dados
+    const {nome, descricao, preco, estoque, produto_id} = req.body;
+    const conn = await pool.getConnection();
+    await conn.query('UPDATE produtos SET nome = ?, descricao = ?, preco = ?, estoque = ? WHERE produto_id = ?', [nome, descricao, preco, estoque,produto_id]);
+    conn.release();
+    res.json();
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 }); // Faz o servidor rodar na porta 3000
