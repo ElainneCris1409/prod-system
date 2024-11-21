@@ -24,7 +24,7 @@ app.use(express.json()); //serve para o express entender que o corpo (body) da r
 app.use(express.urlencoded({ extended: true })); // serve para o express entender que o corpo (body) da requisição é um formulário
 
 app.get("/clientes", async (req, res) => {
-  //cria a rota /clientes (req: igual a request que chama o backend, res: igual a response que o backend retorna para o frontend) com o método GET para buscar todos os clientes no banco de dados
+  //cria a rota /clientes (req: request que chama o backend, res:response que o backend retorna para o frontend) com o método GET para buscar todos os clientes no banco de dados
   const conn = await pool.getConnection();
   const [rows] = await conn.query("SELECT * FROM clientes"); //faz a consulta no banco de dados
   conn.release();
@@ -154,16 +154,37 @@ app.get("/pedidos/:id", async (req, res) => {
   conn.release();
   res.json(rows);
 });
+
 app.post("/pedidos", async (req, res) => {
   const { cliente_id, data_pedido, valor_total } = req.body;
   const conn = await pool.getConnection();
-  await conn.query(
+  const [rows] = await conn.query( //é o resultado da consulta na base de dados
+
+  "SELECT * FROM clientes WHERE cliente_id = ?",
+  [cliente_id]
+  );
+
+  if (rows.length === 0) { //se o cliente não for encontrado (.length === 0) é o tamanho do que volta da base de dados. Ele retorna um erro 400
+    res.status(400).send("Cliente não encontrado");
+    return; //retorna o erro 400 e não executa o resto do código.
+    
+  }
+  
+  try {
+    await conn.query( //se o cliente for encontrado ele insere o pedido na base de dados
+
     "INSERT INTO pedidos (cliente_id, data_pedido, valor_total) VALUES (?, ?, ?)",
     [cliente_id, data_pedido, valor_total]
   );
+  } catch (error) {
+    res.status(500).send("Erro ao inserir o pedido");
+  }
   conn.release();
-  res.json();
+  res.status(201).json(); //retorna um JSON vazio status 201 é o status de criado
+
 });
+
+
 
 app.put("/pedidos", async (req, res) => {
   const { cliente_id, data_pedido, valor_total, pedido_id } = req.body;
@@ -174,7 +195,7 @@ app.put("/pedidos", async (req, res) => {
       [cliente_id, data_pedido, valor_total, pedido_id]
     );
   } catch (error) {
-    res.status(500).send("Erro ao atualizar o pedido");
+    res.status(500).send("Erro ao atualizar o pedido ");
   }
   conn.release();
   res.json();
@@ -215,23 +236,17 @@ app.get("/pedido_produtos/:id", async (req, res) => {
 app.post("/pedido_produtos", async (req, res) => {
   const { pedido_id, produto_id, quantidade, preco_unitario } = req.body;
   const conn = await pool.getConnection();
-
-  try {
+try {
     await conn.query(
-      `INSERT INTO pedido_produtos (pedido_id, produto_id, quantidade, preco_unitario)
-             VALUES (?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE                   //Se o registro já existir, atualiza os campos
-             quantidade = VALUES(quantidade), 
-             preco_unitario = VALUES(preco_unitario)`,
+      "INSERT INTO pedido_produtos (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)",
       [pedido_id, produto_id, quantidade, preco_unitario]
     );
-    res.json({ message: "Registro inserido ou atualizado com sucesso!" });
+    conn.release(); //libera a conexão com o banco de dados
+    res.status(200).json(); //retorna um JSON vazio
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao processar a solicitação." });
-  } finally {
-    conn.release();
+    res.status(500).send("Erro ao inserir o pedido ou esse produto já foi inserido no pedido");
   }
+  
 });
 app.put("/pedido_produtos", async (req, res) => {
   const { pedido_id, produto_id, quantidade, preco_unitario } = req.body;
