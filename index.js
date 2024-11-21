@@ -56,13 +56,22 @@ app.get("/clientes/:id", async (req, res) => {
   //cria a rota /clientes/:id com o método GET para buscar um cliente específico no banco de dados
   const { id } = req.params;
   const conn = await pool.getConnection();
-  const [rows] = await conn.query(
-    "SELECT * FROM clientes WHERE cliente_id = ?",
-    [id]
-  );
+  try {
+    const [rows] = await conn.query(
+      "SELECT * FROM clientes WHERE cliente_id = ?",
+      [id]
+    );
+    if (rows.length === 0) { 
+      res.status(404).send("Cliente não encontrado");
+      return;
+    } 
+    res.json(rows[0]);//retorna o cliente encontrado
+  } catch (error) {
+    res.status(500).send("Erro ao buscar o cliente");
+  }
   conn.release();
-  res.json(rows);
 });
+  
 /**
  * Deletar um cliente
  * Para deletar foi inserido um cliente inexistente na base de dados, com o ID chamamaos esse Id no postman para o delete e confirmamos no mysql com o select de clientes.
