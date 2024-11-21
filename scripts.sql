@@ -28,3 +28,19 @@ CREATE TABLE pedido_produtos (
     FOREIGN KEY (pedido_id) REFERENCES pedidos(pedido_id),
     FOREIGN KEY (produto_id) REFERENCES produtos(produto_id) 
 );
+
+//Explicação para MySQL 8.0.19+
+Alias (AS new): O alias new se refere aos valores que você está inserindo.
+
+Substituir VALUES(col) por new.col: No exemplo, new.quantidade e new.preco_unitario se referem aos valores que foram inseridos na tentativa inicial.
+
+Aplicação em Node.js
+Se você estiver usando placeholders (?) no Node.js, pode ajustar o código assim:
+await conn.query(
+    `INSERT INTO pedido_produtos (pedido_id, produto_id, quantidade, preco_unitario)
+     VALUES (?, ?, ?, ?) AS new
+     ON DUPLICATE KEY UPDATE
+     quantidade = new.quantidade, 
+     preco_unitario = new.preco_unitario`,
+    [2, 2, 1, 3.200]
+);
