@@ -1,8 +1,9 @@
 const express = require("express"); //busca o pacote do express
+const cors = require('cors'); //busca o pacote do cors
 const mysql = require("mysql2/promise");
 const app = express(); // Chama a função com tudo do express para o
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 /*
 Criar a conexao com a base de dados
@@ -18,6 +19,10 @@ const pool = mysql.createPool({
 });
 
 //Clientes
+app.use(cors({
+  origin: 'http://localhost:3000' // aqui você libera o frontend na porta 3000
+}));
+
 
 app.use(express.json()); //serve para o express entender que o corpo (body) da requisição é um JSON
 
@@ -289,4 +294,4 @@ app.delete("/pedido_produtos/:pedido_id/:produto_id", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); // Faz o servidor rodar na porta 3000
+}); // Faz o servidor rodar na porta 3001
